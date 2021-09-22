@@ -1,0 +1,465 @@
+{
+    "viewId": "e8e66b17-4aeb-4857-af81-f472023bb05e",
+    "viewName": "Client Detail",
+    "description": "This client report view provides detailed information about the list of clients that are seen in the network",
+    "viewInfo": null,
+    "schedules":
+    [
+        {
+            "type": "SCHEDULE_NOW",
+            "default": true
+        },
+        {
+            "type": "SCHEDULE_LATER",
+            "default": false
+        },
+        {
+            "type": "SCHEDULE_RECURRENCE",
+            "default": false
+        }
+    ],
+    "deliveries":
+    [
+        {
+            "type": "DOWNLOAD",
+            "default": true
+        },
+        {
+            "type": "EMAIL",
+            "default": false
+        },
+        {
+            "type": "WEBHOOK",
+            "default": false
+        }
+    ],
+    "formats":
+    [
+        {
+            "name": "CSV",
+            "format": "CSV",
+            "template":
+            {
+                "jsTemplateId": "BJYghfA3z"
+            },
+            "default": true
+        },
+        {
+            "name": "Tableau Data Extract",
+            "format": "TDE",
+            "template": null,
+            "default": false
+        },
+        {
+            "name": "JSON",
+            "format": "JSON",
+            "template": null,
+            "default": false
+        }
+    ],
+    "fieldGroups":
+    [
+        {
+            "fieldGroupName": "client_details",
+            "fieldGroupDisplayName": "Client Details",
+            "tableId": "5dc99b14-d258-11e8-a8d5-f2801f1b9fd1",
+            "fields":
+            [
+                {
+                    "name": "hostName",
+                    "displayName": "Host Name"
+                },
+                {
+                    "name": "username",
+                    "displayName": "User ID"
+                },
+                {
+                    "name": "macAddress",
+                    "displayName": "MAC Address"
+                },
+                {
+                    "name": "ipv4",
+                    "displayName": "IPv4 Address"
+                },
+                {
+                    "name": "ipv6",
+                    "displayName": "IPv6 Address"
+                },
+                {
+                    "name": "deviceType",
+                    "displayName": "Device Type"
+                },
+                {
+                    "name": "connectionStatus",
+                    "displayName": "Current Status"
+                },
+                {
+                    "name": "averageHealthScore_min",
+                    "displayName": "Min Health Score"
+                },
+                {
+                    "name": "averageHealthScore_max",
+                    "displayName": "Max Health Score"
+                },
+                {
+                    "name": "averageHealthScore_median",
+                    "displayName": "Median Health Score"
+                },
+                {
+                    "name": "usage_sum",
+                    "displayName": "Usage (MB)"
+                },
+                {
+                    "name": "connectedDeviceName",
+                    "displayName": "Connected Device Name"
+                },
+                {
+                    "name": "frequency",
+                    "displayName": "Band"
+                },
+                {
+                    "name": "rssi_median",
+                    "displayName": "RSSI (dBm)"
+                },
+                {
+                    "name": "snr_median",
+                    "displayName": "SNR (dB)"
+                },
+                {
+                    "name": "site",
+                    "displayName": "Last Location"
+                },
+                {
+                    "name": "lastUpdated",
+                    "displayName": "Last Seen"
+                },
+                {
+                    "name": "apGroup",
+                    "displayName": "AP Group"
+                },
+                {
+                    "name": "ssid",
+                    "displayName": "SSID"
+                },
+                {
+                    "name": "vlan",
+                    "displayName": "VLAN ID"
+                },
+                {
+                    "name": "vnid",
+                    "displayName": "VNID"
+                },
+                {
+                    "name": "onboardingEventTime",
+                    "displayName": "Onboarding Time"
+                },
+                {
+                    "name": "assocDoneTimestamp",
+                    "displayName": "Association Time"
+                },
+                {
+                    "name": "authDoneTimestamp",
+                    "displayName": "Authentication Time"
+                },
+                {
+                    "name": "aaaServerIp",
+                    "displayName": "Authentication Server"
+                },
+                {
+                    "name": "dhcpDoneTimestamp",
+                    "displayName": "Last DHCP Request"
+                },
+                {
+                    "name": "maxDhcpDuration_max",
+                    "displayName": "DHCP Response Time (ms)"
+                },
+                {
+                    "name": "dhcpServerIp",
+                    "displayName": "DHCP Server"
+                },
+                {
+                    "name": "linkSpeed",
+                    "displayName": "Link Speed (Mbps)"
+                },
+                {
+                    "name": "txRate_min",
+                    "displayName": "Min Tx Rate (bps)"
+                },
+                {
+                    "name": "txRate_max",
+                    "displayName": "Max Tx Rate (bps)"
+                },
+                {
+                    "name": "txRate_avg",
+                    "displayName": "Average Tx Rate (bps)"
+                },
+                {
+                    "name": "rxRate_min",
+                    "displayName": "Min Rx Rate (bps)"
+                },
+                {
+                    "name": "rxRate_max",
+                    "displayName": "Max Rx Rate (bps)"
+                },
+                {
+                    "name": "rxRate_avg",
+                    "displayName": "Average Rx Rate (bps)"
+                },
+                {
+                    "name": "txBytes_sum",
+                    "displayName": "Tx (MB)"
+                },
+                {
+                    "name": "rxBytes_sum",
+                    "displayName": "Rx (MB)"
+                },
+                {
+                    "name": "dataRate_median",
+                    "displayName": "Data Rate (Mbps)"
+                },
+                {
+                    "name": "dot11Protocol",
+                    "displayName": "Client Protocol"
+                }
+            ]
+        }
+    ],
+    "filters":
+    [
+        {
+            "name": "TimeRange",
+            "displayName": "Time Range",
+            "type": "TIME_RANGE",
+            "dataType": null,
+            "filterSource": null,
+            "cacheFilter": false,
+            "required": false,
+            "timeOptions":
+            [
+                {
+                    "name": "Last 3 Hours",
+                    "value": "LAST_3_HOURS",
+                    "minValue": 1,
+                    "maxValue": 3,
+                    "info": null
+                },
+                {
+                    "name": "Last 24 Hours",
+                    "value": "LAST_24_HOURS",
+                    "minValue": 1,
+                    "maxValue": 24,
+                    "info": null
+                },
+                {
+                    "name": "Last 7 Days",
+                    "value": "LAST_7_DAYS",
+                    "minValue": 1,
+                    "maxValue": 168,
+                    "info": null
+                },
+                {
+                    "name": "Custom",
+                    "value": "CUSTOM",
+                    "minValue": 1,
+                    "maxValue": 2160,
+                    "info": null
+                }
+            ],
+            "additionalInfo": null,
+            "filterInfo": null,
+            "parent": null,
+            "selectLimit": null
+        },
+        {
+            "name": "Location",
+            "displayName": "Location",
+            "type": "MULTI_SELECT_TREE",
+            "dataType": "Array",
+            "filterSource":
+            {
+                "rootPath": "$.response",
+                "valuePath": "$.id",
+                "displayValuePath": "$.siteHierarchy",
+                "dataSource":
+                {
+                    "type": "REST_API",
+                    "addlParams": null,
+                    "mockData": null,
+                    "context":
+                    {
+                        "pathOrUrl": "/site/list",
+                        "servicePath": "/api/assurance/v1",
+                        "method": "GET",
+                        "headers":
+                        {},
+                        "queryParams":
+                        {},
+                        "body": null,
+                        "external": false
+                    },
+                    "bapi": false,
+                    "pagination":
+                    {
+                        "limit": 2000,
+                        "count":
+                        {
+                            "dataSource":
+                            {
+                                "type": "COUNT_REST_API",
+                                "addlParams": null,
+                                "mockData": null,
+                                "context":
+                                {
+                                    "pathOrUrl": "/site/list/count",
+                                    "servicePath": "/api/assurance/v1",
+                                    "method": "GET",
+                                    "headers":
+                                    {},
+                                    "queryParams":
+                                    {},
+                                    "body": null,
+                                    "external": false
+                                },
+                                "bapi": false
+                            },
+                            "value": "$.response",
+                            "addlParams":
+                            []
+                        }
+                    }
+                }
+            },
+            "cacheFilter": false,
+            "required": false,
+            "timeOptions": null,
+            "additionalInfo":
+            {
+                "treeLevelPath": "$.type",
+                "treeLevels":
+                [
+                    "area",
+                    "building"
+                ],
+                "disableLevels": null
+            },
+            "filterInfo": null,
+            "parent": null,
+            "selectLimit": null
+        },
+        {
+            "name": "DeviceType",
+            "displayName": "Device Type",
+            "type": "SINGLE_SELECT_ARRAY",
+            "dataType": "String",
+            "filterSource":
+            {
+                "rootPath": "",
+                "valuePath": "",
+                "displayValuePath": "",
+                "dataSource":
+                {
+                    "type": "STATIC",
+                    "addlParams": null,
+                    "mockData": null,
+                    "options":
+                    [
+                        {
+                            "label": "All",
+                            "value": "All"
+                        },
+                        {
+                            "label": "Wired",
+                            "value": "Wired"
+                        },
+                        {
+                            "label": "Wireless",
+                            "value": "Wireless"
+                        }
+                    ]
+                }
+            },
+            "cacheFilter": false,
+            "required": false,
+            "timeOptions": null,
+            "additionalInfo": null,
+            "filterInfo": null,
+            "parent": null,
+            "selectLimit": null
+        },
+        {
+            "name": "SSID",
+            "displayName": "SSID",
+            "type": "MULTI_SELECT",
+            "dataType": "Array",
+            "filterSource":
+            {
+                "rootPath": "$.response",
+                "valuePath": "$.value",
+                "displayValuePath": "$.value",
+                "dataSource":
+                {
+                    "type": "REST_API",
+                    "addlParams": null,
+                    "mockData": null,
+                    "context":
+                    {
+                        "pathOrUrl": "/host/auto-complete?field=ssid&value=&endTime=1631819493269",
+                        "servicePath": "/api/assurance/v1",
+                        "method": "GET",
+                        "headers":
+                        {},
+                        "queryParams":
+                        {},
+                        "body": null,
+                        "external": false
+                    },
+                    "bapi": false,
+                    "pagination": null
+                }
+            },
+            "cacheFilter": false,
+            "required": false,
+            "timeOptions": null,
+            "additionalInfo": null,
+            "filterInfo": null,
+            "parent": null,
+            "selectLimit": null
+        },
+        {
+            "name": "Band",
+            "displayName": "Band",
+            "type": "MULTI_SELECT",
+            "dataType": "Array",
+            "filterSource":
+            {
+                "rootPath": "",
+                "valuePath": "",
+                "displayValuePath": "",
+                "dataSource":
+                {
+                    "type": "STATIC",
+                    "addlParams": null,
+                    "mockData": null,
+                    "options":
+                    [
+                        {
+                            "label": "2.4",
+                            "value": "2.4"
+                        },
+                        {
+                            "label": "5",
+                            "value": "5"
+                        }
+                    ]
+                }
+            },
+            "cacheFilter": false,
+            "required": false,
+            "timeOptions": null,
+            "additionalInfo": null,
+            "filterInfo": null,
+            "parent": null,
+            "selectLimit": null
+        }
+    ]
+}

@@ -1,0 +1,276 @@
+{
+    "viewId": "5057bfff-30bd-4a08-8439-82e4c957d367",
+    "viewName": "Threat Detail",
+    "description": "This report provides for the detailed information about the rogue AP's and aWIPS threats that are seen in the network",
+    "viewInfo": null,
+    "schedules": [
+        {
+            "type": "SCHEDULE_NOW",
+            "default": true
+        },
+        {
+            "type": "SCHEDULE_LATER",
+            "default": false
+        },
+        {
+            "type": "SCHEDULE_RECURRENCE",
+            "default": false
+        }
+    ],
+    "deliveries": [
+        {
+            "type": "DOWNLOAD",
+            "default": true
+        },
+        {
+            "type": "EMAIL",
+            "default": false
+        },
+        {
+            "type": "WEBHOOK",
+            "default": false
+        }
+    ],
+    "formats": [
+        {
+            "name": "CSV",
+            "format": "CSV",
+            "template": {
+                "jsTemplateId": "BJYghfA3z"
+            },
+            "default": true
+        },
+        {
+            "name": "Tableau Data Extract",
+            "format": "TDE",
+            "template": null,
+            "default": false
+        },
+        {
+            "name": "JSON",
+            "format": "JSON",
+            "template": null,
+            "default": false
+        }
+    ],
+    "fieldGroups": [
+        {
+            "fieldGroupName": "rogue_details",
+            "fieldGroupDisplayName": "Threat Details",
+            "tableId": "9dc99b14-d258-11e8-a8d9-f2801f1b9fe1",
+            "fields": [
+                {
+                    "name": "threatLevel",
+                    "displayName": "Threat Level"
+                },
+                {
+                    "name": "macAddress",
+                    "displayName": "Mac Address"
+                },
+                {
+                    "name": "threatType",
+                    "displayName": "Threat Type"
+                },
+                {
+                    "name": "apName",
+                    "displayName": "Detecting AP Name"
+                },
+                {
+                    "name": "siteHierarchyName",
+                    "displayName": "Location"
+                },
+                {
+                    "name": "rssi",
+                    "displayName": "Latest RSSI (dBm)"
+                },
+                {
+                    "name": "ssid",
+                    "displayName": "SSID"
+                },
+                {
+                    "name": "vendor",
+                    "displayName": "Vendor Name"
+                },
+                {
+                    "name": "lastUpdated",
+                    "displayName": "Last Updated"
+                }
+            ]
+        }
+    ],
+    "filters": [
+        {
+            "name": "TimeRange",
+            "displayName": "Time Range",
+            "type": "TIME_RANGE",
+            "dataType": null,
+            "filterSource": null,
+            "cacheFilter": false,
+            "required": false,
+            "timeOptions": [
+                {
+                    "name": "Last 3 Hours",
+                    "value": "LAST_3_HOURS",
+                    "minValue": 1,
+                    "maxValue": 3,
+                    "info": null
+                },
+                {
+                    "name": "Last 24 Hours",
+                    "value": "LAST_24_HOURS",
+                    "minValue": 1,
+                    "maxValue": 24,
+                    "info": null
+                },
+                {
+                    "name": "Last 7 Days",
+                    "value": "LAST_7_DAYS",
+                    "minValue": 1,
+                    "maxValue": 168,
+                    "info": null
+                },
+                {
+                    "name": "Custom",
+                    "value": "CUSTOM",
+                    "minValue": 1,
+                    "maxValue": 2160,
+                    "info": null
+                }
+            ],
+            "additionalInfo": null,
+            "filterInfo": null,
+            "parent": null,
+            "selectLimit": null
+        },
+        {
+            "name": "Location",
+            "displayName": "Location",
+            "type": "MULTI_SELECT_TREE",
+            "dataType": "Array",
+            "filterSource": {
+                "rootPath": "$.response",
+                "valuePath": "$.id",
+                "displayValuePath": "$.groupNameHierarchy",
+                "dataSource": {
+                    "type": "REST_API",
+                    "addlParams": null,
+                    "mockData": null,
+                    "context": {
+                        "pathOrUrl": "?groupNameHierarchy=Global.*&field=name,id,parentId,groupNameHierarchy,additionalInfo.attributes.type",
+                        "servicePath": "/api/v1/group",
+                        "method": "GET",
+                        "headers": {},
+                        "queryParams": {},
+                        "body": null,
+                        "external": false
+                    },
+                    "bapi": false,
+                    "pagination": {
+                        "limit": 500,
+                        "count": {
+                            "dataSource": {
+                                "type": "COUNT_REST_API",
+                                "addlParams": null,
+                                "mockData": null,
+                                "context": {
+                                    "pathOrUrl": "/count?groupType=SITE",
+                                    "servicePath": "/api/v1/group",
+                                    "method": "GET",
+                                    "headers": {},
+                                    "queryParams": {},
+                                    "body": null,
+                                    "external": false
+                                },
+                                "bapi": false
+                            },
+                            "value": "$.response",
+                            "addlParams": []
+                        }
+                    }
+                }
+            },
+            "cacheFilter": false,
+            "required": false,
+            "timeOptions": null,
+            "additionalInfo": {
+                "treeLevelPath": "$.additionalInfo[0].attributes.type",
+                "treeLevels": [
+                    "area",
+                    "building"
+                ],
+                "disableLevels": null
+            },
+            "filterInfo": null,
+            "parent": null,
+            "selectLimit": null
+        },
+        {
+            "name": "ThreatLevel",
+            "displayName": "Threat Level",
+            "type": "MULTI_SELECT",
+            "dataType": "Array",
+            "filterSource": {
+                "rootPath": "$.response",
+                "valuePath": "$.name",
+                "displayValuePath": "$.name",
+                "dataSource": {
+                    "type": "REST_API",
+                    "addlParams": null,
+                    "mockData": null,
+                    "context": {
+                        "pathOrUrl": "/autocomplete/threatlevel",
+                        "servicePath": "/api/assurance/v1/rogue-service",
+                        "method": "GET",
+                        "headers": {},
+                        "queryParams": {},
+                        "body": null,
+                        "external": false
+                    },
+                    "bapi": false,
+                    "pagination": null
+                }
+            },
+            "cacheFilter": false,
+            "required": false,
+            "timeOptions": null,
+            "additionalInfo": null,
+            "filterInfo": null,
+            "parent": null,
+            "selectLimit": null
+        },
+        {
+            "name": "ThreatType",
+            "displayName": "Threat Type",
+            "type": "MULTI_SELECT",
+            "dataType": "Array",
+            "filterSource": {
+                "rootPath": "$.response",
+                "valuePath": "$.name",
+                "displayValuePath": "$.name",
+                "dataSource": {
+                    "type": "REST_API",
+                    "addlParams": null,
+                    "mockData": null,
+                    "context": {
+                        "pathOrUrl": "/autocomplete/threattype",
+                        "servicePath": "/api/assurance/v1/rogue-service",
+                        "method": "GET",
+                        "headers": {},
+                        "queryParams": {},
+                        "body": null,
+                        "external": false
+                    },
+                    "bapi": false,
+                    "pagination": null
+                }
+            },
+            "cacheFilter": false,
+            "required": false,
+            "timeOptions": null,
+            "additionalInfo": null,
+            "filterInfo": null,
+            "parent": null,
+            "selectLimit": null
+        }
+    ]
+}

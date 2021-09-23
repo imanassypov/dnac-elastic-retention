@@ -73,15 +73,15 @@ DATE_PRINT_FORMAT='%Y-%m-%d %H:%M:%S'
 REPORT_NAME_DATE_FORMAT='%Y-%m-%d'
 MILLISECONDS = 1000
 
-REPORT_DATE_TO = datetime.now().replace(tzinfo=timezone.utc, day=1,hour=23,minute=59,second=59) - timedelta(days=1)
-REPORT_DATE_FROM = datetime.now().replace(tzinfo=timezone.utc, day=1,hour=0,minute=0,second=0) - timedelta(days=REPORT_DATE_TO.day)
+# REPORT_DATE_TO = datetime.now().replace(tzinfo=timezone.utc, day=1,hour=23,minute=59,second=59) - timedelta(days=1)
+# REPORT_DATE_FROM = datetime.now().replace(tzinfo=timezone.utc, day=1,hour=0,minute=0,second=0) - timedelta(days=REPORT_DATE_TO.day)
 
 #REPORT_CATEGORY = 'Client'
 #VIEW_NAME = 'Client Detail'
 REPORT_CATEGORY = 'Rogue and aWIPS'
 VIEW_NAME = 'Threat Detail'
 
-REPORT_NAME = VIEW_NAME +  " MONTHLY " + REPORT_DATE_TO.strftime(REPORT_NAME_DATE_FORMAT)
+# REPORT_NAME = VIEW_NAME +  " MONTHLY " + REPORT_DATE_TO.strftime(REPORT_NAME_DATE_FORMAT)
 
 #Elastic parameters
 ELASTIC_INDEX = 'dnac_rogue_threat_detail'
@@ -213,7 +213,7 @@ def get_report_id(report_name: str, view_id: str, group_id: str, dnac_auth: str)
     response = requests.get(url, headers=header, verify=False)
     if (response.status_code == requests.codes.ok):
         for report in response.json():
-            if report['name'] == REPORT_NAME:
+            if report['name'] == report_name:
                 report_id = report['reportId']
     return report_id
 
@@ -321,8 +321,6 @@ def get_date_range(interval: str):
         date_range['report_date_to'] = (today - delta).replace(hour=23,minute=59,second=59)
         date_range['report_date_from'] = (today - delta).replace(hour=0,minute=0,second=0)
 
-    print (date_range)
-
     return date_range
 
 
@@ -356,6 +354,8 @@ def main(verbose,last):
     date_range = get_date_range(last)
     REPORT_DATE_FROM = date_range['report_date_from']
     REPORT_DATE_TO = date_range['report_date_to']
+
+    REPORT_NAME = VIEW_NAME +  " {0} ".format(last) + REPORT_DATE_TO.strftime(REPORT_NAME_DATE_FORMAT)
 
     # get the Cisco DNA Center Auth token
     dnac_auth = get_dnac_jwt_token(DNAC_AUTH)

@@ -24,7 +24,6 @@ import logging
 import json
 import os
 import uuid
-from dotenv import load_dotenv
 
 from elasticsearch import Elasticsearch 
 from elasticsearch import helpers
@@ -44,8 +43,11 @@ def connect_es (elastic_url: str, elastic_user: str, elastic_pass: str):
     logging.info("Connecting to ES:{0}".format(es_client.ping()))
     if not es_client.ping():
         raise ValueError("Connection to Elastic {0} failed".format(elastic_url))
+        logging.debug("Connection to Elastic {0} failed".format(elastic_url))
     else:
-        print ("Connected to Elastic \nCluster name:\t{0}\nversion:\t{1}\n".format(es_client.info()['name'], es_client.info()['version']['number']))
+        logging.info("Connected to Elastic \nCluster name:\t{0}\nversion:\t{1}\n".format(
+            es_client.info()['name'], 
+            es_client.info()['version']['number']))
     return es_client
 
 def create_index(index_name: str, mapping: dict, es_client: Elasticsearch):

@@ -16,6 +16,8 @@ or implied.
 
 __author__ = "Gabriel Zapodeanu TME, ENB"
 __email__ = "gzapodea@cisco.com"
+__author__ = "Igor Manassypov, System Architect"
+__email__ = "imanassy@cisco.com"
 __version__ = "0.1.0"
 __copyright__ = "Copyright (c) 2021 Cisco and/or its affiliates."
 __license__ = "Cisco Sample Code License, Version 1.1"
@@ -28,11 +30,13 @@ import urllib3
 import json
 import requests
 import sys
+import click
 
 import dnacenter_elastic
 import dnacenter_reports
 
 from datetime import datetime, timezone, timedelta
+from dateutil.relativedelta import relativedelta
 from dotenv import load_dotenv
 from requests.auth import HTTPBasicAuth  # for Basic Auth
 from urllib3.exceptions import InsecureRequestWarning  # for insecure https warnings
@@ -82,6 +86,9 @@ REPORT_NAME = VIEW_NAME +  " MONTHLY " + REPORT_DATE_TO.strftime(REPORT_NAME_DAT
 #Elastic parameters
 ELASTIC_INDEX = 'dnac_rogue_threat_detail'
 
+#verbose output
+VERBOSE = False
+
 #DNAC Location scope
 #Location scope expects Location Id Object
 #Caveat: Location ID scope can not contain more than 254 elements
@@ -112,9 +119,14 @@ def get_dnac_jwt_token(dnac_auth):
     if(response.status_code == requests.codes.ok):
         dnac_jwt_token = response.json()['Token']
     else:
-        print("Authentication to DNAC failed. Status: ", response.status_code)
+        if VERBOSE:
+            print("Authentication to DNAC failed. Status: ", response.status_code)
+            logging.debug("Authentication to DNAC failed. Status: : {0}".response)
         sys.exit(1)
-    print ("Connected to DNAC {0}. Status: {1}\n".format(DNAC_URL, response.status_code))
+
+    if VERBOSE:
+        print ("Connected to DNAC {0}. Status: {1}\n".format(DNAC_URL, response.status_code))
+        logging.info("Connected to DNAC {0}. Status: {1}\n".format(DNAC_URL, response.status_code))
     return dnac_jwt_token
 
 
@@ -278,16 +290,59 @@ def export_report_file (report_content: json, filename: str):
         print('Client report not saved, error received: ', report_error)
         logging.info("Report save to file {0} failed with {1}".format(filename, report_error))
 
-def main():
+def get_date_range(interval: str):
+    REPORT_DATE_TO = datetime.now().replace(tzinfo=timezone.utc, day=1,hour=23,minute=59,second=59) - timedelta(days=1)
+    REPORT_DATE_FROM = datetime.now().replace(tzinfo=timezone.utc, day=1,hour=0,minute=0,second=0) - timedelta(days=REPORT_DATE_TO.day)
+    #today's date
+    today = datetime.now().replace(tzinfo=timezone.utc)
+    weekday = today.weekday()
+
+    date_range = {
+        "report_date_from": today,
+        "report_date_to": today
+    }
+
+    if interval == '24hours':
+        delta = timedelta(days=1)
+        date_range['report_date_to'] = today
+        date_range['report_date_from'] = date_range['report_date_to'] - delta
+    elif interval == 'week':
+        delta = timedelta(days=weekday,weeks=1)
+        date_range['report_date_from'] = (today - delta).replace(hour=0,minute=0,second=0)
+        date_range['report_date_to'] = (date_range['report_date_from'] + timedelta(weeks=1)).replace(hour=23,minute=59,second=59)
+    elif interval == 'month':
+        date_range['report_date_to'] = today.replace(day=1,hour=23,minute=59,second=59) - timedelta(days=1)
+        date_range['report_date_from'] = today.replace(day=1,hour=0,minute=0,second=0) - timedelta(days=date_range['report_date_to'].day)
+    elif interval == '3month':
+        date_range['report_date_to'] = today.replace(day=1,hour=23,minute=59,second=59) - timedelta(days=1)
+        date_range['report_date_from'] = today.replace(day=1,hour=0,minute=0,second=0) - relativedelta(months=+6)
+    else:
+        delta = timedelta(days=1)
+        date_range['report_date_to'] = (today - delta).replace(hour=23,minute=59,second=59)
+        date_range['report_date_from'] = (today - delta).replace(hour=0,minute=0,second=0)
+
+    print (date_range)
+
+    return date_range
+
+
+@click.command()
+@click.option('--verbose', is_flag=True, default = False, help="Will print verbose messages.")
+@click.option(
+    '--last', default="day", 
+    type=click.Choice(['24hours','day','week','month','3month']),
+    help="Collect data for last number of [24hours|day|week|month|3month]. Default is day")
+def main(verbose,last):
     """
-    This application will create a new Client Detail Report:
+    This application will create a new Threat Detail Report in DNAC:
      - for the Global site
-     - all client details
-     - run now schedule
-     - all client details
-     - wired and wireless clients
+     - All Threat Details in the requested interval
      - will check when report execution is completed and save the report to a file
+     - Index the generated report into Elastic for archiving purposes
+     - Note: During Indexing, Threat MAC Address will be treated as a UUID
+     - to avoid Threat duplication. If same MAC Address is encountered, the record will be updated in Elastic
     """
+    VERBOSE = verbose
 
     # logging, debug level, to file {application_run.log}
     logging.basicConfig(
@@ -298,22 +353,31 @@ def main():
 
     current_time = str(datetime.now().strftime(DATE_PRINT_FORMAT))
 
+    date_range = get_date_range(last)
+    REPORT_DATE_FROM = date_range['report_date_from']
+    REPORT_DATE_TO = date_range['report_date_to']
+
     # get the Cisco DNA Center Auth token
     dnac_auth = get_dnac_jwt_token(DNAC_AUTH)
 
     #establish connectivity to Elastic cluster
     es_connection = dnacenter_elastic.connect_es(elastic_url=ELASTIC_URL,elastic_user=ELASTIC_USER,elastic_pass=ELASTIC_PASS)
+    if VERBOSE:
+        print ("Connected to Elastic \nCluster name:\t{0}\nversion:\t{1}\n".format(
+            es_connection.info()['name'], 
+            es_connection.info()['version']['number']))
 
     view_group_id = get_report_view_group_id (report_category=REPORT_CATEGORY, dnac_auth=dnac_auth)
     report_view_id = get_report_view_id_by_name (view_name=VIEW_NAME, view_group_id=view_group_id, dnac_auth=dnac_auth)
 
-    print('\nCreate Report App Run Start, ', current_time)
-    print('\nReport name: \n {0}'.format(REPORT_NAME))
-    print('\nReport dates: \n{0}\n{1}'.format(REPORT_DATE_FROM.strftime(DATE_PRINT_FORMAT), REPORT_DATE_TO.strftime(DATE_PRINT_FORMAT)))
-    print('\nReport Category:', REPORT_CATEGORY)
-    print('\nReport View Group Id is:', view_group_id)
-    print('\nReport View Name:', VIEW_NAME)
-    print('\nReport View Id is:', report_view_id)
+    if VERBOSE:
+        print('\nCreate Report App Run Start, ', current_time)
+        print('\nReport name:\n {0}'.format(REPORT_NAME))
+        print('\nReport dates:\n{0}\n{1}'.format(REPORT_DATE_FROM.strftime(DATE_PRINT_FORMAT), REPORT_DATE_TO.strftime(DATE_PRINT_FORMAT)))
+        print('\nReport Category:', REPORT_CATEGORY)
+        print('\nReport View Group Id is:', view_group_id)
+        print('\nReport View Name:', VIEW_NAME)
+        print('\nReport View Id is:', report_view_id)
 
     # get the detailed report views
     # this is useful when constructing a new report request and you need to get field names
@@ -338,8 +402,8 @@ def main():
     report_request['view']['id'] = report_view_id
     report_request['view']['description'] = REPORT_NAME
     # filter constructor which must be augmented to report request payload 'view' dict
-    #report_request_filter = DnacReportPayload.get_filter_dict(location=[],date_from=REPORT_DATE_FROM, date_to=REPORT_DATE_TO)
     report_request_filter = dnacenter_reports.get_filter_dict(location=[],date_from=REPORT_DATE_FROM, date_to=REPORT_DATE_TO)
+
     # append the filter to 'view' (note: append, not replace)
     report_request['view'] = {**report_request['view'], **report_request_filter}
 
@@ -348,49 +412,64 @@ def main():
     create_report_status = create_report(payload=report_request, dnac_auth=dnac_auth)
 
     if (create_report_status.status_code == requests.codes.ok):
-        print('\nReport submitted')
+        if VERBOSE:
+            print('\nReport submitted')
 
         # parsing the response from create new report API
         create_report_json = create_report_status.json()
         report_id = create_report_json['reportId']
-        print('Report id: ', report_id)
+
+        if VERBOSE:
+            print('Report id: ', report_id)
 
         # verify when the report execution starts
         # this app will create a new report, not execute an existing report again
         # due to this there will be always execution count "0" when the report is triggered
         # for a new report, not executed yet
 
-        print('\nWait for report execution to start')
+        if VERBOSE:
+            print('\nWait for report execution to start')
+
         start = timer()
         execution_count = 0
         while execution_count == 0:
             time.sleep(1)
-            print('!', end="", flush=True)
+            if VERBOSE:
+                print('!', end="", flush=True)
             report_details = get_report_executions(report_id, dnac_auth)
             execution_count = report_details['executionCount']
         end=timer()
-        print("\nOperation took: {0} seconds".format(end-start))
+
+        if VERBOSE:
+            print("\nOperation took: {0} seconds".format(end-start))
 
         # report execution started
-        print('\n\nReport execution started, wait for process to complete')
+        if VERBOSE:
+            print('\n\nReport execution started, wait for process to complete')
 
         # check when the report is completed
         process_status = None
         start=timer()
         while process_status != 'SUCCESS':
             time.sleep(1)
-            print('!', end="", flush=True)
+            if VERBOSE:
+                print('!', end="", flush=True)
             report_details = get_report_executions(report_id, dnac_auth)
             execution_info = report_details['executions'][0]
             process_status = execution_info['processStatus']
         end=timer()
-        print("\nOperation took: {0} seconds".format(end-start))
+
+        if VERBOSE:
+            print("\nOperation took: {0} seconds".format(end-start))
 
         # execution completed successfully
 
-        print('\n\nReport execution completed')
+        if VERBOSE:
+            print('\n\nReport execution completed')
         execution_id = report_details['executions'][0]['executionId']
-        print('Report execution id: ', execution_id)
+
+        if VERBOSE:
+            print('Report execution id: ', execution_id)
 
         # download the report
         # call the API to download the report file
@@ -398,27 +477,22 @@ def main():
         # print('\nReport content:\n', report_content)
 
     else:
-        print('\nReport not submitted. \nCode:\t{0}\nStatus:\t{1} '.format(create_report_status.status_code, create_report_status.reason))
+        if VERBOSE:
+            print('\nReport not submitted. \nCode:\t{0}\nStatus:\t{1} '.format(create_report_status.status_code, create_report_status.reason))
         logging.debug('Report not submitted. \nCode:\t{0}\nStatus:\t{1} '.format(create_report_status.status_code, create_report_status.reason))
         sys.exit(1)
 
     #clock end-to-end report generation in dnac
     dnac_report_timer_end = timer()
-    print('Create Report App Run End')
-    print("Operation took: {0} seconds".format(dnac_report_timer_end-dnac_report_timer_start))
+
+    if VERBOSE:
+        print('Create Report App Run End')
+        print("Operation took: {0} seconds".format(dnac_report_timer_end-dnac_report_timer_start))
 
     res = dnacenter_elastic.create_index(
         index_name=ELASTIC_INDEX, 
         mapping=es_report_index_mapping, 
         es_client=es_connection)
-
-    # res = dnacenter_elastic.index(
-    #     index_name=ELASTIC_INDEX,
-    #     report_content=report_content,
-    #     key='rogue_details',
-    #     unique_hash_key='macAddress', 
-    #     es_client=es_connection,
-    #     SiteHierarchyDelimiter=SITE_HIERARCHY_DELIMITER)
 
     # time export operation
     start = timer()
@@ -429,8 +503,10 @@ def main():
         es_client=es_connection,
         SiteHierarchyDelimiter=SITE_HIERARCHY_DELIMITER)
     end=timer()
-    print ("Elastic export completed.{0}".format(res))
-    print ("Operation took: {0} seconds".format(end-start))
+
+    if VERBOSE:
+        print ("Elastic export completed.{0}".format(res))
+        print ("Operation took: {0} seconds".format(end-start))
 
 if __name__ == '__main__':
     main()

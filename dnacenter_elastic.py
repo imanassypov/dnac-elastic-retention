@@ -173,7 +173,7 @@ def bulk_index(index_name: str, report_content: dict, unique_hash_key: str, es_c
             actions,
             chunk_size = 1000,
             request_timeout = 200)
-        print ("Bulk Export result:", result)
+        print ("Bulk Export result:", op_res)
         logging.debug("Elastic bulk export completed: {0}".format(op_res))
     except Exception as e:
         logging.debug("Elastic bulk export failed: {0}".format(e))

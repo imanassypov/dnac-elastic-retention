@@ -9,3 +9,4 @@ pyopenssl
 python-dotenv
 elasticsearch
 elasticsearch-dsl
+click

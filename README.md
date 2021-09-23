@@ -96,7 +96,7 @@ Operation took: 0.3002833649999985 seconds
 - ensure path to your python3 is referenced correctly
 
 ```sh
-cronjob -e
+crontab -e
 @daily /usr/local/bin/python3 /Users/imanassy/Documents/Python/DNAC/dnac-elastic-retention/dnacenter_archiver.py --last day 2>&1
 
 ```

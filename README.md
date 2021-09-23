@@ -7,16 +7,21 @@
 - Script will automatically create an Elastic Index if it does not exist
 - Rogue MAC Address id is treated as a unique identifier when indexing to Elastic to avoid Rogue Entry duplication. Ie if the mac address of the rogue is already indexed, this entry will be updated in Elastic rather than created anew
 - Each execution of the script is logged to local file 'application_run.log'
+- The script will generate a snapshot of all Locations under 'Global' location hierarchy in DNAC. Further analysis / data slicing can be performed in Elastic/Kibana
+- DNAC Report API requires submission of report payload as part of the call. Sample payload structures are included in this repository for reference
+- Note: DNAC Report Payload includes 'filter' section, which allows for specification of various filters such as time range, location etc. Location filter supports a maximum of 254 elements, so when creating an API call for a Site Hierarchy element which contains more that 254 elements (ie buildings, floors etc) - report API request must be submitted in batches with 'location' filter populated with up to 254 floor elements
+- Elastic Mapping schema used in the script leverages dynamic / runtime fields that calculate hour of day, and day of week to enable heatmap visualizations
+- Script logic additionally breaks up the report supplied 'Location' string into individual fields when indexed into Elastic to allow for further per-location filtering (ie Country / City / Building / Floor etc)
 
 ### Assumptions
 - It is assumed that the script is run automatically at scheduled intervals (ie daily, monthly)
-- That you have an Elastic cluster.
+- DNAC with managed Wireless Lan Controller and associated Access Points
+- Elastic Stack / Kibana
 
-### Deployment topology:
-NETWORK--[PAT]--[Gig1/0/24]--Cat9k--[AppGigabitEthernet1/0/1]-[Vlan101]--TE
 
 ## Requirements
 - Elastic 7.14.1 (as tested)
+- Kibana
 - Python 3.9.7 (as tested)
 - DNAC 2.2.2.3 (as tested)
 
@@ -36,7 +41,7 @@ NETWORK--[PAT]--[Gig1/0/24]--Cat9k--[AppGigabitEthernet1/0/1]-[Vlan101]--TE
 - perform a sample script execution
 
 ```sh
- python3 dnacenter_archiver.py --verbose --last month
+python3 dnacenter_archiver.py --verbose --last month
 Connected to Elastic
 Cluster name:   elastic
 version:    7.14.1

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Copyright (c) 2021 Cisco and/or its affiliates.
@@ -333,12 +333,12 @@ def get_date_range(interval: str):
 def main(verbose,last):
     """
     This application will create a new Threat Detail Report in DNAC:
-     - for the Global site
-     - All Threat Details in the requested interval
-     - will check when report execution is completed and save the report to a file
-     - Index the generated report into Elastic for archiving purposes
-     - Note: During Indexing, Threat MAC Address will be treated as a UUID
-     - to avoid Threat duplication. If same MAC Address is encountered, the record will be updated in Elastic
+    for the Global site
+    All Threat Details in the requested interval
+    Will check when report execution is completed and save the report to a file
+    Index the generated report into Elastic for archiving purposes
+    Note: During Indexing, Threat MAC Address will be treated as a UUID
+    to avoid Threat duplication. If same MAC Address is encountered, the record will be updated in Elastic
     """
     VERBOSE = verbose
 

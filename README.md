@@ -26,12 +26,20 @@
 - DNAC 2.2.2.3 (as tested)
 
 ## References
-- The code for this script was forked from Gabi Zapodeanu's repo: 
--- https://github.com/cisco-en-programmability/dnacenter_reports_operations
+- The code for this script was forked from Gabi Zapodeanu's repo: https://github.com/cisco-en-programmability/dnacenter_reports_operations
 
 
 ## Installation
 - clone repository to your local machine
+
+## Supported intervals
+- please note that minimum interval supported by DNAC for reporting purposes is 3 hours
+- script supports following time intervals
+- by default (with no supplied options) the script collects data for the previous day
+
+```sh
+--last 24hours|day|week|month|3month
+```
 
 ```sh
  git clone https://github.com/imanassypov/dnac-elastic-retention.git
@@ -40,6 +48,7 @@
 - copy sample environment.env.sample file and modify to match credentials in your environment
 - perform a sample script execution
 
+## Sample CLI Execution
 ```sh
 python3 dnacenter_archiver.py --verbose --last month
 Connected to Elastic
@@ -82,10 +91,12 @@ Elastic export completed.(32, [])
 Operation took: 0.3002833649999985 seconds
 ```
 
-## Supported intervals
-- please note that minimum interval supported by DNAC for reporting purposes is 3 hours
-- script supports following time intervals
+## Scheduling the script to run automatically using cron
+- following cron directive will run the script daily
+- ensure path to your python3 is referenced correctly
 
 ```sh
---last 24hours|day|week|month|3month
+cronjob -e
+@daily /usr/local/bin/python3 /Users/imanassy/Documents/Python/DNAC/dnac-elastic-retention/dnacenter_archiver.py --last day 2>&1
+
 ```

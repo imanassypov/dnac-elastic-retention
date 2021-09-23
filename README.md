@@ -100,3 +100,7 @@ cronjob -e
 @daily /usr/local/bin/python3 /Users/imanassy/Documents/Python/DNAC/dnac-elastic-retention/dnacenter_archiver.py --last day 2>&1
 
 ```
+
+## Sample Elastic visualizations
+![Elastic - Rogue Detail Discovery](https://github.com/imanassypov/dnac-elastic-retention/blob/main/images/elastic_discovery.png)
+![Elastic - Rogue Detail Dashboard](https://github.com/imanassypov/dnac-elastic-retention/blob/main/images/elastic_dashboard.png)

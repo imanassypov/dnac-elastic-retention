@@ -28,6 +28,9 @@ import uuid
 from elasticsearch import Elasticsearch 
 from elasticsearch import helpers
 
+from dnacenter_archiver import get_sites_coordinates, get_site_geojson, DNAC_AUTH, get_dnac_jwt_token
+
+
 def connect_es (elastic_url: str, elastic_user: str, elastic_pass: str):
     """
     Create connection object to elastic search
@@ -75,7 +78,8 @@ def doc_count(es_client: Elasticsearch, index: str):
     record_count = es_client.count(index=index)['count']
     return record_count
 
-def tokenize_location(siteHieararchyName: str, delimeter: str):
+
+def tokenize_location(siteHieararchyName: str, delimeter: str, sites: list):
     """
     Create a dict location identifier from string
     return tokenized dictionary mapping to expected keys in customer site hierarchy
@@ -92,6 +96,10 @@ def tokenize_location(siteHieararchyName: str, delimeter: str):
 
     for i, e in enumerate(loc):
         loc_dict[hierarchy_elements[i]] = e
+
+    loc_dict['geojson'] = get_site_geojson(siteHieararchyName, sites)
+
+    # print(json.dumps(loc_dict))
 
     return loc_dict
 
@@ -120,6 +128,10 @@ def index(index_name: str, report_content: dict, key: str, unique_hash_key: str,
         'total': initial_doc_count
     }
 
+    # Get Sites to be able to parse out GeoJson for events
+    dnac_auth = get_dnac_jwt_token(DNAC_AUTH)
+    sites = get_sites_coordinates(dnac_auth)
+
     for doc in report_content[key]:
         #calculate unique id field such that if script is run multiple times over same 
         #dataset the values are updated instead of duplicated
@@ -129,7 +141,8 @@ def index(index_name: str, report_content: dict, key: str, unique_hash_key: str,
             dict1 = doc, 
             dict2 = tokenize_location(
                 siteHieararchyName=doc['siteHierarchyName'],
-                delimeter=SiteHierarchyDelimiter))
+                delimeter=SiteHierarchyDelimiter,
+                sites=sites))
 
         res = es_client.index(
             index=index_name,
@@ -154,6 +167,12 @@ def bulk_index(index_name: str, report_content: dict, unique_hash_key: str, es_c
 
     actions = []
 
+
+    # Get Sites to be able to parse out GeoJson for events
+    dnac_auth = get_dnac_jwt_token(DNAC_AUTH)
+    sites = get_sites_coordinates(dnac_auth)
+
+
     for doc in report_content:
         #uuid returns a class
         #so need to cast it to a string
@@ -164,7 +183,8 @@ def bulk_index(index_name: str, report_content: dict, unique_hash_key: str, es_c
             dict1 = doc, 
             dict2 = tokenize_location(
                 siteHieararchyName=doc['siteHierarchyName'],
-                delimeter=SiteHierarchyDelimiter))
+                delimeter=SiteHierarchyDelimiter,
+                sites=sites))
         actions += [doc]
 
     try:

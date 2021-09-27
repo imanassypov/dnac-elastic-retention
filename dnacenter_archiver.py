@@ -101,8 +101,9 @@ VIEW_NAME = 'Threat Detail'
 # REPORT_NAME = VIEW_NAME +  " MONTHLY " + REPORT_DATE_TO.strftime(REPORT_NAME_DATE_FORMAT)
 
 #Elastic parameters
+# ELASTIC_INDEX = 'andrew_index2'.lower()
 ELASTIC_INDEX = 'dnac_rogue_threat_detail'
-
+ELASTIC_INDEX = ELASTIC_INDEX.lower() # index must be lowercase
 #verbose output
 VERBOSE = False
 
@@ -146,6 +147,40 @@ def get_dnac_jwt_token(dnac_auth):
         logging.info("Connected to DNAC {0}. Status: {1}\n".format(DNAC_URL, response.status_code))
     return dnac_jwt_token
 
+
+def get_sites_coordinates(dnac_auth: str):
+    """
+    This function will return the location information for all sites
+   :param dnac_auth: Cisco DNA Center Auth
+   :return: list of sites
+    """
+    url = DNAC_URL + '/dna/intent/api/v1/topology/site-topology'
+    header = {'Content-Type': 'application/json', 'X-Auth-Token': dnac_auth}
+    response = requests.get(url, headers=header, verify=False)
+    if response.status_code == 200:
+        sites = response.json()['response']['sites']
+        return sites
+    else:
+        print(response.text)
+        return []
+
+
+def get_site_geojson(siteHierarchyName: str, sites: list):
+    """
+    This function will return the location information for all sites
+   :param siteHierarchyName: Name of site to be searched
+   :param sites: List of sites to be searched, get from single API call using get_sites_cooridnates
+   :return: GeoJson for that site
+    """
+    if sites:
+        for site in sites:
+            if site["groupNameHierarchy"] == siteHierarchyName:
+                if site['longitude'] and site['latitude']:
+                    mypoint = [round(float(site['longitude']), 2), round(float(site['latitude']), 2)]
+                    return mypoint
+    # If nothing found, return a blank point
+    # return []
+    return [-79.347015, 43.651070] # For debugging, return Toronto
 
 def get_report_view_groups(dnac_auth):
     """
@@ -408,10 +443,12 @@ def main(verbose,last):
 
     #es_report_index_mapping = EsReportMapping.Threat_Detail_Mapping.copy()
     es_report_index_mapping = dnacenter_reports.ES_Threat_Detail_Mapping.copy()
+    es_report_index_mapping['mappings']['properties']['geojson'] = {"type": "geo_point"}
 
     # construct new request payload specific to 'thread detail' report params
     #report_request = DnacReportPayload.Threat_Detail_Payload.copy()
     report_request = dnacenter_reports.DNAC_Threat_Detail_Payload.copy()
+    # print(json.dumps(es_report_index_mapping))
     report_request['name'] = REPORT_NAME
     report_request['dataCategory'] = REPORT_CATEGORY
     report_request['viewGroupId'] = view_group_id

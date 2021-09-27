@@ -175,8 +175,15 @@ def get_site_geojson(siteHierarchyName: str, sites: list):
         for site in sites:
             if site["groupNameHierarchy"] == siteHierarchyName:
                 if site['longitude'] and site['latitude']:
-                    mypoint = [round(float(site['longitude']), 2), round(float(site['latitude']), 2)]
-                    return mypoint
+                    # Due to a bug in DNA-C where floors have location [0,0] we need to find parent
+                    parentId = site["parentId"]
+
+                    # Once we have found the parent (building of the floor), search for it and return location
+                    for building in sites.copy():
+                        if building["id"] == parentId:
+                            if building['longitude'] and building['latitude']:
+                                mypoint = [round(float(building['longitude']), 2), round(float(building['latitude']), 2)]
+                                return mypoint
     # If nothing found, return a blank point
     # return []
     return [-79.347015, 43.651070] # For debugging, return Toronto

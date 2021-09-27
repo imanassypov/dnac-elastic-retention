@@ -37,27 +37,44 @@ import dnacenter_reports
 
 from datetime import datetime, timezone, timedelta
 from dateutil.relativedelta import relativedelta
-from dotenv import load_dotenv
+from dotenv import load_dotenv, dotenv_values
 from requests.auth import HTTPBasicAuth  # for Basic Auth
 from urllib3.exceptions import InsecureRequestWarning  # for insecure https warnings
 
 from timeit import default_timer as timer
 
-load_dotenv('environment.env')
+# ENVIRONMENT VARIABLES (CREDENTIALS)
+ENV_FILE = 'environment.env'
 
-# DNAC authentication params
-DNAC_URL = os.getenv('DNAC_URL')
-DNAC_USER = os.getenv('DNAC_USER')
-DNAC_PASS = os.getenv('DNAC_PASS')
-
-ELASTIC_URL = os.getenv('ELASTIC_URL')
-ELASTIC_USER = os.getenv('ELASTIC_USER')
-ELASTIC_PASS = os.getenv('ELASTIC_PASS')
-
+# DNAC Location strings use a delimiter to delineate area/building/floor identifiers
+# this delimiter is used to split the string into descrete site hierarchy elements
+# to import into Elastic
 SITE_HIERARCHY_DELIMITER = '/'
 
-if None in (DNAC_URL, DNAC_USER, DNAC_PASS):
-    print("ENV variables {DNAC_URL | DNAC_USER | DNAC_PASS} not set. Exiting")
+# If the script is run as crontab job (as root)
+# we need to supply a full path to where the .env file is located
+# and we will load auth parameters from the file's absolute path
+# directory from which the script is run
+dn = os.path.dirname(os.path.realpath(__file__))
+# path to environment file with credentials definitions
+env_full_path = os.path.join(dn,ENV_FILE)
+
+# The function dotenv_values works more or less the same way as load_dotenv, 
+# except it doesn't touch the environment, 
+# it just returns a dict with the values parsed from the .env file.
+env_dict = dotenv_values(env_full_path)
+
+try:
+    DNAC_URL = env_dict['DNAC_URL']
+    DNAC_USER = env_dict['DNAC_USER']
+    DNAC_PASS = env_dict['DNAC_PASS']
+
+    ELASTIC_URL = env_dict['ELASTIC_URL']
+    ELASTIC_USER = env_dict['ELASTIC_USER']
+    ELASTIC_PASS = env_dict['ELASTIC_PASS']
+except Exception as e:
+    logging.debug("ENV variables in file {0} not set. Exiting.".format(env_full_path))
+    print("ENV variables in file {0} not set. Exiting.".format(env_full_path))
     sys.exit(1)
 
 # os.environ['TZ'] = 'America/Los_Angeles'  # define the timezone for PST

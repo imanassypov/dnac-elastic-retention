@@ -185,8 +185,8 @@ def get_site_geojson(siteHierarchyName: str, sites: list):
                                 mypoint = [round(float(building['longitude']), 2), round(float(building['latitude']), 2)]
                                 return mypoint
     # If nothing found, return a blank point
-    # return []
-    return [-79.347015, 43.651070] # For debugging, return Toronto
+    return []
+    # return [-79.347015, 43.651070] # For debugging, return Toronto
 
 def get_report_view_groups(dnac_auth):
     """

@@ -97,7 +97,7 @@ def tokenize_location(siteHieararchyName: str, delimeter: str, sites: list):
     for i, e in enumerate(loc):
         loc_dict[hierarchy_elements[i]] = e
 
-    loc_dict['geojson'] = get_site_geojson(siteHieararchyName, sites)
+    loc_dict['location'] = get_site_geojson(siteHieararchyName, sites)
 
     # print(json.dumps(loc_dict))
 

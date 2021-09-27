@@ -39,6 +39,7 @@ ES_Threat_Detail_Mapping = {
             "ssid": {"type": "keyword"},
             "vendor": {"type": "keyword"},
             "lastUpdated": {"type": "date"},
+            "location": {"type": "geo_point"}
         },
         "runtime": {
             "day_of_week": {

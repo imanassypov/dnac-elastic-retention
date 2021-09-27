@@ -101,7 +101,6 @@ VIEW_NAME = 'Threat Detail'
 # REPORT_NAME = VIEW_NAME +  " MONTHLY " + REPORT_DATE_TO.strftime(REPORT_NAME_DATE_FORMAT)
 
 #Elastic parameters
-# ELASTIC_INDEX = 'andrew_index2'.lower()
 ELASTIC_INDEX = 'dnac_rogue_threat_detail'
 ELASTIC_INDEX = ELASTIC_INDEX.lower() # index must be lowercase
 #verbose output
@@ -152,7 +151,7 @@ def get_sites_coordinates(dnac_auth: str):
     """
     This function will return the location information for all sites
    :param dnac_auth: Cisco DNA Center Auth
-   :return: list of sites
+   :return: list of sites, each of which is a dictionary
     """
     url = DNAC_URL + '/dna/intent/api/v1/topology/site-topology'
     header = {'Content-Type': 'application/json', 'X-Auth-Token': dnac_auth}
@@ -443,7 +442,6 @@ def main(verbose,last):
 
     #es_report_index_mapping = EsReportMapping.Threat_Detail_Mapping.copy()
     es_report_index_mapping = dnacenter_reports.ES_Threat_Detail_Mapping.copy()
-    es_report_index_mapping['mappings']['properties']['geojson'] = {"type": "geo_point"}
 
     # construct new request payload specific to 'thread detail' report params
     #report_request = DnacReportPayload.Threat_Detail_Payload.copy()

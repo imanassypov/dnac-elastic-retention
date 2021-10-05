@@ -24,12 +24,13 @@ import logging
 import json
 import os
 import uuid
+import requests
 
 from elasticsearch import Elasticsearch 
 from elasticsearch import helpers
+from elasticsearch.client import WatcherClient
 
 from dnacenter_archiver import get_sites_coordinates, get_site_geojson, DNAC_AUTH, get_dnac_jwt_token
-
 
 def connect_es (elastic_url: str, elastic_user: str, elastic_pass: str):
     """
@@ -52,6 +53,7 @@ def connect_es (elastic_url: str, elastic_user: str, elastic_pass: str):
             es_client.info()['name'], 
             es_client.info()['version']['number']))
     return es_client
+
 
 def create_index(index_name: str, mapping: dict, es_client: Elasticsearch):
     """

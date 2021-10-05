@@ -171,3 +171,39 @@ def get_filter_dict (location: list, date_from: datetime, date_to: datetime):
             ]
         }
     return dict_filters
+
+
+# Configure at least one email account to enable Watcher to send email.
+# For more information, refer to Configuring email accounts: https://www.elastic.co/guide/en/elasticsearch/reference/7.15/actions-email.html#configuring-email
+
+# API PUT _watcher/watch/<report name>
+Create_Watcher_Report= {
+  "trigger": {
+    "schedule": {
+      "interval": "1d"  # Set Interval
+    }
+  },
+  "actions" : {
+    "email_admin" : {
+      "email": {
+        "to": "",   # Receiver email address
+        "subject": "",  # Subject
+        "attachments": {
+          "attachment.pdf": {    # name of attachment/report
+            "reporting": {
+              "url": "",    # Created POST URL from elastic page to be exported
+              "retries":40,
+              "interval":"15s",
+              "auth":{
+                "basic":{
+                  "username":"",    # Elastic user
+                  "password":""     # Elastic password
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

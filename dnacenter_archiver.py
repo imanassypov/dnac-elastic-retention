@@ -18,6 +18,8 @@ __author__ = "Gabriel Zapodeanu TME, ENB"
 __email__ = "gzapodea@cisco.com"
 __author__ = "Igor Manassypov, System Architect"
 __email__ = "imanassy@cisco.com"
+__author__ = "Andrew Dunsmoor, Technical Solutions Specialist"
+__email__ = "adunsmoo@cisco.com"
 __version__ = "0.1.0"
 __copyright__ = "Copyright (c) 2021 Cisco and/or its affiliates."
 __license__ = "Cisco Sample Code License, Version 1.1"
@@ -59,8 +61,8 @@ dn = os.path.dirname(os.path.realpath(__file__))
 # path to environment file with credentials definitions
 env_full_path = os.path.join(dn,ENV_FILE)
 
-# The function dotenv_values works more or less the same way as load_dotenv, 
-# except it doesn't touch the environment, 
+# The function dotenv_values works more or less the same way as load_dotenv,
+# except it doesn't touch the environment,
 # it just returns a dict with the values parsed from the .env file.
 env_dict = dotenv_values(env_full_path)
 
@@ -74,6 +76,7 @@ try:
     ELASTIC_PASS = env_dict['ELASTIC_PASS']
     ELASTIC_LOCAL = env_dict['ELASTIC_LOCAL']
 except Exception as e:
+    print(e)
     logging.debug("ENV variables in file {0} not set. Exiting.".format(env_full_path))
     print("ENV variables in file {0} not set. Exiting.".format(env_full_path))
     sys.exit(1)
@@ -383,14 +386,6 @@ def get_date_range(interval: str):
     return date_range
 
 
-@click.command()
-@click.option('--verbose', is_flag=True, default = False, help="Will print verbose messages.")
-@click.option(
-    '--last', default="day", 
-    type=click.Choice(['24hours','day','week','month','3month']),
-    help="Collect data for last number of [24hours|day|week|month|3month]. Default is day")
-
-
 def create_pdf_report(subject: str, to: str, filename: str, es_client, interval: str):
     """
     Creates a watcher in elastic with an action to send an email containing a pdf report with the specifications listed.
@@ -442,7 +437,12 @@ def create_pdf_report(subject: str, to: str, filename: str, es_client, interval:
     resp = watcher_client.put_watch(id='test_watch_id4', body=payload, params=params)
     return resp
 
-
+@click.command()
+@click.option('--verbose', is_flag=True, default = False, help="Will print verbose messages.")
+@click.option(
+    '--last', default="day",
+    type=click.Choice(['24hours','day','week','month','3month']),
+    help="Collect data for last number of [24hours|day|week|month|3month]. Default is day")
 def main(verbose,last):
     """
     This application will create a new Threat Detail Report in DNAC:
@@ -469,6 +469,10 @@ def main(verbose,last):
     REPORT_DATE_TO = date_range['report_date_to']
 
     REPORT_NAME = VIEW_NAME +  " {0} ".format(last) + REPORT_DATE_TO.strftime(REPORT_NAME_DATE_FORMAT)
+    REPORT_NAME = f"{VIEW_NAME} {last} {REPORT_DATE_FROM.strftime(REPORT_NAME_DATE_FORMAT)} to {REPORT_DATE_TO.strftime(REPORT_NAME_DATE_FORMAT)}"
+
+    # create index name
+    index_name = f"{ELASTIC_INDEX}_{last}_{REPORT_DATE_FROM.strftime(REPORT_NAME_DATE_FORMAT)}_to_{REPORT_DATE_TO.strftime(REPORT_NAME_DATE_FORMAT)}"
 
     # get the Cisco DNA Center Auth token
     dnac_auth = get_dnac_jwt_token(DNAC_AUTH)
@@ -477,7 +481,7 @@ def main(verbose,last):
     es_connection = dnacenter_elastic.connect_es(elastic_url=ELASTIC_URL,elastic_user=ELASTIC_USER,elastic_pass=ELASTIC_PASS)
     if VERBOSE:
         print ("Connected to Elastic \nCluster name:\t{0}\nversion:\t{1}\n".format(
-            es_connection.info()['name'], 
+            es_connection.info()['name'],
             es_connection.info()['version']['number']))
 
     view_group_id = get_report_view_group_id (report_category=REPORT_CATEGORY, dnac_auth=dnac_auth)
@@ -603,17 +607,20 @@ def main(verbose,last):
         print('Create Report App Run End')
         print("Operation took: {0} seconds".format(dnac_report_timer_end-dnac_report_timer_start))
 
+
     res = dnacenter_elastic.create_index(
-        index_name=ELASTIC_INDEX, 
-        mapping=es_report_index_mapping, 
+        # index_name=ELASTIC_INDEX,
+        index_name=index_name,
+        mapping=es_report_index_mapping,
         es_client=es_connection)
 
     # time export operation
     start = timer()
     res = dnacenter_elastic.bulk_index(
-        index_name=ELASTIC_INDEX,
+        # index_name=ELASTIC_INDEX,
+        index_name = index_name,
         report_content=report_content['rogue_details'],
-        unique_hash_key='macAddress', 
+        unique_hash_key='macAddress',
         es_client=es_connection,
         SiteHierarchyDelimiter=SITE_HIERARCHY_DELIMITER)
     end=timer()
@@ -623,4 +630,5 @@ def main(verbose,last):
         print ("Operation took: {0} seconds".format(end-start))
 
 if __name__ == '__main__':
+    # main(sys.argv[0], sys.argv[1])
     main()

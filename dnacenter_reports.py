@@ -25,6 +25,11 @@ from datetime import datetime, timezone, timedelta
 ES_Threat_Detail_Mapping = {
     "mappings": {
         "properties": {
+            ### ingest_timestamp added for application-level timestamping of records
+            ### in situation where elastic role given to the user does not have privileges
+            ### to create pipeline for automatic timestamping
+            "ingest_timestamp": {"type": "date","format": "strict_date_optional_time||epoch_millis"},
+            ###
             "threatLevel": {"type": "keyword"},
             "macAddress": {"type": "keyword"},
             "threatType": {"type": "keyword"},

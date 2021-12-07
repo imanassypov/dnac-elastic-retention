@@ -103,7 +103,7 @@ REPORT_CATEGORY = 'Rogue and aWIPS'
 VIEW_NAME = 'Threat Detail'
 
 #Elastic parameters
-ELASTIC_INDEX = 'igor_dnac_rogue_threat_detail'
+ELASTIC_INDEX = 'dnac_rogue_threat_detail'
 ELASTIC_INDEX = ELASTIC_INDEX.lower() # index must be lowercase
 #verbose output
 VERBOSE = False

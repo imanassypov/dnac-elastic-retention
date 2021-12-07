@@ -29,6 +29,7 @@ import requests
 from elasticsearch import Elasticsearch 
 from elasticsearch import helpers
 from elasticsearch.client import WatcherClient
+from datetime import datetime, timezone, timedelta
 
 from dnacenter_archiver import get_sites_coordinates, get_site_geojson, DNAC_AUTH, get_dnac_jwt_token
 
@@ -42,7 +43,10 @@ def connect_es (elastic_url: str, elastic_user: str, elastic_pass: str):
     """
     es_client = Elasticsearch(
             elastic_url,
-            http_auth=(elastic_user,elastic_pass)
+            http_auth=(elastic_user,elastic_pass),
+    #       enable for SSL connection
+    #       use_ssl=True,
+    #       verify_certs=False,
             )
     logging.info("Connecting to ES:{0}".format(es_client.ping()))
     if not es_client.ping():
@@ -66,43 +70,43 @@ def create_index(index_name: str, mapping: dict, es_client: Elasticsearch):
     which can later be mapped in Kibana as a @timestamp
     """
     
-    AUTOMATIC_TIMESTAMP_PIPELINE_NAME = "timestamp_pipeline"
-    AUTOMATIC_TIMESTAMP_FIELD_NAME = "ingest_timestamp"
+    # AUTOMATIC_TIMESTAMP_PIPELINE_NAME = "timestamp_pipeline"
+    # AUTOMATIC_TIMESTAMP_FIELD_NAME = "ingest_timestamp"
 
-    #define ingest pipeline metric
-    timestamp_pipeline_setting = {
-      "description": "insert timestamp field for all documents",
-      "processors": [
-        {
-          "set": {
-            "field": AUTOMATIC_TIMESTAMP_FIELD_NAME,
-            "value": "{{_ingest.timestamp}}"
-          }
-        }
-      ]
-    }
+    # #define ingest pipeline metric
+    # timestamp_pipeline_setting = {
+    #   "description": "insert timestamp field for all documents",
+    #   "processors": [
+    #     {
+    #       "set": {
+    #         "field": AUTOMATIC_TIMESTAMP_FIELD_NAME,
+    #         "value": "{{_ingest.timestamp}}"
+    #       }
+    #     }
+    #   ]
+    # }
 
-    #create mapping settings referencing the pipeline with auto-timestamp field
-    mapping_settings = {
-      "settings": {
-      "number_of_shards": 2,
-      "number_of_replicas": 1,
-      "default_pipeline": AUTOMATIC_TIMESTAMP_PIPELINE_NAME
-      }
-    }
+    # #create mapping settings referencing the pipeline with auto-timestamp field
+    # mapping_settings = {
+    #   "settings": {
+    #   "number_of_shards": 2,
+    #   "number_of_replicas": 1,
+    #   "default_pipeline": AUTOMATIC_TIMESTAMP_PIPELINE_NAME
+    #   }
+    # }
 
-    #append pipeline reference to passed index mapping
-    new_mapping = merge_dict(mapping, mapping_settings)
+    # #append pipeline reference to passed index mapping
+    # mapping = merge_dict(mapping, mapping_settings)
 
-    #call elastic to create the auto-timestamp ingestion pipeline
-    es_client.ingest.put_pipeline(AUTOMATIC_TIMESTAMP_PIPELINE_NAME, timestamp_pipeline_setting)
+    # #call elastic to create the auto-timestamp ingestion pipeline
+    # es_client.ingest.put_pipeline(AUTOMATIC_TIMESTAMP_PIPELINE_NAME, timestamp_pipeline_setting)
 
     #return code on function exit
     res = 0
 
     if not es_client.indices.exists(index_name):
-        logging.info("Creating index {0} with the following schema: {1}".format(index_name, {json.dumps(new_mapping, indent=2)}))
-        res = es_client.indices.create(index=index_name, body=new_mapping)
+        logging.info("Creating index {0} with the following schema: {1}".format(index_name, {json.dumps(mapping, indent=2)}))
+        res = es_client.indices.create(index=index_name, body=mapping)
         logging.info("Creating index result: {0}".format(res))
     else:
         logging.info("Index {0} exists. Skipping create index".format(index_name))
@@ -204,12 +208,11 @@ def bulk_index(index_name: str, report_content: dict, unique_hash_key: str, es_c
     logging.info("Starting to bulk index {0} documents. Total records {1}. Hashing on key {2}".format(len(report_content), initial_doc_count, unique_hash_key))
 
     actions = []
-
+    timestamp = datetime.now().replace(tzinfo=timezone.utc)
 
     # Get Sites to be able to parse out GeoJson for events
     dnac_auth = get_dnac_jwt_token(DNAC_AUTH)
     sites = get_sites_coordinates(dnac_auth)
-
 
     for doc in report_content:
         #uuid returns a class
@@ -217,6 +220,7 @@ def bulk_index(index_name: str, report_content: dict, unique_hash_key: str, es_c
         _id = str(uuid.uuid5(uuid.NAMESPACE_URL,doc[unique_hash_key]))
         doc["_id"] = _id
         doc["_index"] = index_name
+        doc["ingest_timestamp"] = timestamp
         doc = merge_dict(
             dict1 = doc, 
             dict2 = tokenize_location(

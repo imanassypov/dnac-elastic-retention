@@ -61,12 +61,48 @@ def create_index(index_name: str, mapping: dict, es_client: Elasticsearch):
     :param index_name: Name of the index.
     :param mapping: Mapping of the index
     returns result of create operation, or OK(0)
+    We will insert automated timestamp field into the index mapping schema
+    such that every indexed document will have an associated ingest_timestamp field
+    which can later be mapped in Kibana as a @timestamp
     """
+    
+    AUTOMATIC_TIMESTAMP_PIPELINE_NAME = "timestamp_pipeline"
+    AUTOMATIC_TIMESTAMP_FIELD_NAME = "ingest_timestamp"
+
+    #define ingest pipeline metric
+    timestamp_pipeline_setting = {
+      "description": "insert timestamp field for all documents",
+      "processors": [
+        {
+          "set": {
+            "field": AUTOMATIC_TIMESTAMP_FIELD_NAME,
+            "value": "{{_ingest.timestamp}}"
+          }
+        }
+      ]
+    }
+
+    #create mapping settings referencing the pipeline with auto-timestamp field
+    mapping_settings = {
+      "settings": {
+      "number_of_shards": 2,
+      "number_of_replicas": 1,
+      "default_pipeline": AUTOMATIC_TIMESTAMP_PIPELINE_NAME
+      }
+    }
+
+    #append pipeline reference to passed index mapping
+    new_mapping = merge_dict(mapping, mapping_settings)
+
+    #call elastic to create the auto-timestamp ingestion pipeline
+    es_client.ingest.put_pipeline(AUTOMATIC_TIMESTAMP_PIPELINE_NAME, timestamp_pipeline_setting)
+
+    #return code on function exit
     res = 0
 
     if not es_client.indices.exists(index_name):
-        logging.info("Creating index {0} with the following schema: {1}".format(index_name, {json.dumps(mapping, indent=2)}))
-        res = es_client.indices.create(index=index_name, body=mapping)
+        logging.info("Creating index {0} with the following schema: {1}".format(index_name, {json.dumps(new_mapping, indent=2)}))
+        res = es_client.indices.create(index=index_name, body=new_mapping)
         logging.info("Creating index result: {0}".format(res))
     else:
         logging.info("Index {0} exists. Skipping create index".format(index_name))

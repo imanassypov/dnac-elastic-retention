@@ -74,7 +74,7 @@ try:
     ELASTIC_URL = env_dict['ELASTIC_URL']
     ELASTIC_USER = env_dict['ELASTIC_USER']
     ELASTIC_PASS = env_dict['ELASTIC_PASS']
-    ELASTIC_LOCAL = env_dict['ELASTIC_LOCAL']
+    #ELASTIC_LOCAL = env_dict['ELASTIC_LOCAL']
 except Exception as e:
     print(e)
     logging.debug("ENV variables in file {0} not set. Exiting.".format(env_full_path))
@@ -102,10 +102,8 @@ MILLISECONDS = 1000
 REPORT_CATEGORY = 'Rogue and aWIPS'
 VIEW_NAME = 'Threat Detail'
 
-# REPORT_NAME = VIEW_NAME +  " MONTHLY " + REPORT_DATE_TO.strftime(REPORT_NAME_DATE_FORMAT)
-
 #Elastic parameters
-ELASTIC_INDEX = 'dnac_rogue_threat_detail'
+ELASTIC_INDEX = 'igor_dnac_rogue_threat_detail'
 ELASTIC_INDEX = ELASTIC_INDEX.lower() # index must be lowercase
 #verbose output
 VERBOSE = False
@@ -421,7 +419,7 @@ def create_pdf_report(subject: str, to: str, filename: str, es_client, interval:
                                 "interval": "15s",
                                 "auth": {
                                     "basic": {
-                                        "username": ELASTIC_USER,  # Elastic user
+                                        "username": ELASTIC_USER, # Elastic user
                                         "password": ELASTIC_PASS  # Elastic password
                                     }
                                 }

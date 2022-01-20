@@ -50,13 +50,13 @@ ES_Threat_Detail_Mapping = {
             "day_of_week": {
             "type": "keyword",
                 "script": {
-                    "source": "emit(doc['lastUpdated'].value.dayOfWeekEnum.getDisplayName(TextStyle.FULL, Locale.ROOT))"
+                    "source": "emit(doc['ingest_timestamp'].value.dayOfWeekEnum.getDisplayName(TextStyle.FULL, Locale.ROOT))"
                 }
             },
             "hour_of_day": {
                 "type": "double",
                 "script": {
-                    "source": "emit(doc['lastUpdated'].value.hourOfDay)"
+                    "source": "emit(doc['ingest_timestamp'].value.hourOfDay)"
                 }
             }
         }
